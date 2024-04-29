@@ -6,15 +6,20 @@
 USBMIDI_CREATE_DEFAULT_INSTANCE();
 LiquidCrystal_I2C lcd(0x27,20,4);
 
+
+//***NUMBER OF COMPONENTS***//
 byte NUMBER_BUTTONS = 2;
 byte NUMBER_POTS = 16;
 
+//***CHANNEL COUNTER***
 byte channelCount = 1;
 
+//***DEFINE CONNECTED MULTIPLEXER****
+//M (Pin Number, Number of inputs, Analog)
 Mux M1(A5,16,true);
 int Mux1_State[16] = {0};
 
-//***DEFINE DIRECTLY CONNECTED POTENTIOMETERS************************
+//***DEFINE CONNECTED POTENTIOMETERS************************
 //Pot (Pin Number, Command, CC Control, Channel Number)
 
 Pot PO1(A5, 0, 3, 1);
@@ -54,38 +59,41 @@ Button *BUTTONS[] {&BU1, &BU2};
 
 
 void setup() {
-  Serial.begin(9600);
   MIDI.begin(MIDI_CHANNEL_OFF);
-  pinMode(LED_BUILTIN,OUTPUT);
   lcd.init();
   lcd.backlight();
   printChannel();
+  /*
+  //***MONITORING
+  Serial.begin(9600);
+  pinMode(LED_BUILTIN,OUTPUT);
+  */
 }
 
 void loop() {
   if (NUMBER_BUTTONS != 0) updateButtons();
   //if (NUMBER_POTS != 0) updatePots();
   updateMux();
-  printMuxPotValues();
+  //printMuxPotValues();
 }
 
-//*****************************************************************
+//***CHANNEL CONTROLLER***************************************
 
 void nextChannel() {
   channelCount++;
   if (channelCount <= 128){
     for (int i =0; i< NUMBER_POTS; i++){
       POTS[i]->setChannel(channelCount);
-      digitalWrite(LED_BUILTIN, HIGH);
-      Serial.println(channelCount);
+      //digitalWrite(LED_BUILTIN, HIGH);
+      //Serial.println(channelCount);
     }
   } 
   else{
     channelCount = 1;
     for (int i =0; i< NUMBER_POTS; i++){
       POTS[i]->setChannel(channelCount);
-      digitalWrite(LED_BUILTIN, HIGH);
-      Serial.println(channelCount);
+      //digitalWrite(LED_BUILTIN, HIGH);
+      //Serial.println(channelCount);
     }
   }
 }
@@ -95,21 +103,21 @@ void previousChannel() {
   if (channelCount >= 1 && channelCount <= 128){
     for (int i =0; i< NUMBER_POTS; i++){
       POTS[i]->setChannel(channelCount);
-      digitalWrite(LED_BUILTIN, HIGH);
-      Serial.println(channelCount);
+      //digitalWrite(LED_BUILTIN, HIGH);
+      //Serial.println(channelCount);
     }
   } 
   else{
     channelCount = 128;
     for (int i =0; i< NUMBER_POTS; i++){
       POTS[i]->setChannel(channelCount);
-      digitalWrite(LED_BUILTIN, HIGH);
-      Serial.println(channelCount);
+      //digitalWrite(LED_BUILTIN, HIGH);
+      //Serial.println(channelCount);
     }
   }
 }
 
-//*****************************************************************
+//***BUTTONS UPDATE*******************************************
 void updateButtons() {
 
   // Cycle through Button array
@@ -135,7 +143,7 @@ void updateButtons() {
   }
 }
 
-//***********************************************************************
+//***POT UPDATE***********************************************
 void updatePots() {
   for (int i = 0; i < NUMBER_POTS; i = i + 1) {
     byte potmessage = POTS[i]->getValue();
@@ -143,6 +151,20 @@ void updatePots() {
   }
 }
 
+//***MUX UPDATE***********************************************
+void updateMux() {
+  for (int i = 0; i < 16; i++) {
+    digitalWrite(6, (i & B00000001) ? HIGH : LOW);
+    digitalWrite(7, (i & B00000010) ? HIGH : LOW);
+    digitalWrite(8, (i & B00000100) ? HIGH : LOW);
+    digitalWrite(9, (i & B00001000) ? HIGH : LOW);
+    byte potmessage = POTS[i]->getValue();
+    //Mux1_State[i] = potmessage;
+    if (potmessage != 255) MIDI.sendControlChange(POTS[i]->Pcontrol, potmessage, POTS[i]->Pchannel);
+  }
+}
+
+//***DISPLAY TEXT ON LCD**************************************
 void printChannel() {
   lcd.clear();
   lcd.setCursor(0,0);
@@ -151,18 +173,9 @@ void printChannel() {
   lcd.print(channelCount);
 }
 
-void updateMux() {
-  for (int i = 0; i < 16; i++) {
-    digitalWrite(6, (i & B00000001) ? HIGH : LOW);
-    digitalWrite(7, (i & B00000010) ? HIGH : LOW);
-    digitalWrite(8, (i & B00000100) ? HIGH : LOW);
-    digitalWrite(9, (i & B00001000) ? HIGH : LOW);
-    byte potmessage = POTS[i]->getValue();
-    Mux1_State[i] = potmessage;
-    if (potmessage != 255) MIDI.sendControlChange(POTS[i]->Pcontrol, potmessage, POTS[i]->Pchannel);
-  }
-}
+//***MONITORING MULTIPLEXER OUTPUT****************************
 
+/*
 void printMuxPotValues() {
   for(int i = 0; i < 16; i ++) {
     if(i == 15) {
@@ -173,3 +186,4 @@ void printMuxPotValues() {
     }
   }
 }
+*/
