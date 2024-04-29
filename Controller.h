@@ -47,4 +47,12 @@ class Pot
     byte _enablepin;
 };
 //*************************************************************************
+class Mux
+{
+  public:
+    Mux(byte outpin_, byte numPins_, bool analog_);
+    byte outpin;
+    byte numPins;
+    bool analog;
+};
 #endif

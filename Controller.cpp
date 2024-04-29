@@ -1,3 +1,4 @@
+#include "Arduino.h"
 
 #include "Controller.h"
 
@@ -63,15 +64,6 @@ Pot::Pot(byte pin, byte command, byte control, byte channel){
   Pchannel = channel;
 }
 
-void Pot::muxUpdate(){
-  byte temp = _muxpin;
-  temp = temp << 2;
-  if (_numMuxPins > 8) PORTD = PORTD & B11000011;
-  else PORTD = PORTD & B11100011;
-  //PORTD = PORTD & B11000011;
-  PORTD = PORTD | temp;
-}
-
 byte Pot::getValue(){
   _value = analogRead(_pin);
   int tmp = (_oldValue - _value);
@@ -86,4 +78,21 @@ byte Pot::getValue(){
 void Pot::setChannel(byte channel) {
   Pchannel = channel;
 }
+//**********************************************************************
+Mux::Mux(byte outpin_, byte numPins_, bool analog_)
+{
+  outpin = outpin_;
+  numPins = numPins_;
+  analog = analog_;
+  if (analog == false) {
+    pinMode(outpin, INPUT_PULLUP);
+    }
+  else {
+    pinMode(outpin, INPUT);
+    }
 
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
+  if (numPins > 8) pinMode(9, OUTPUT);
+}
